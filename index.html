@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Sinc Alarmas</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="assets/img/logo.png" />
+  <link rel="apple-touch-icon" href="assets/img/logo.png" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=sinc-nueva-v2-dialogos-20260711" />
+</head>
+<body>
+  <div id="app" class="app theme-blue mode-3d">
+    <header class="topbar">
+      <div class="topbar-title">
+        <h1>Sinc Alarmas</h1>
+        <p id="statusLine">Preparando sincronización...</p>
+        <p class="version-line" id="versionLine"></p>
+      </div>
+      <button id="menuBtn" class="hamburger" type="button" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <main class="home">
+      <section class="hero-card">
+        <img class="hero-logo" src="assets/img/logo.png" alt="Logo de Sinc Alarmas" />
+        <div>
+          <h2>Alarmas sincronizadas entre dos móviles</h2>
+          <p>Envía avisos programados al otro móvil emparejado y comparte tu ubicación solo cuando tú la autorizas.</p>
+        </div>
+      </section>
+
+      <section class="card identity-card">
+        <div><strong>Este móvil:</strong> <span id="myDeviceIdText"></span></div>
+        <div><strong>Emparejado con:</strong> <span id="peerDeviceIdText">No emparejado</span></div>
+        <div><strong>Canal Firebase:</strong> <span id="pairKeyText">Sin canal</span></div>
+        <div><strong>Pendientes para este móvil:</strong> <span id="pendingIncomingCount">0</span></div>
+        <div><strong>Pendientes enviadas:</strong> <span id="pendingOutgoingCount">0</span></div>
+      </section>
+
+      <section class="card action-card">
+        <button id="quickPairBtn" type="button" class="secondary">Emparejar móvil</button>
+        <button id="quickSendBtn" type="button" class="primary">Enviar alarma</button>
+        <button id="quickListBtn" type="button" class="secondary">Ver alarmas</button>
+      </section>
+
+      <section class="card recent-card">
+        <div class="section-head">
+          <h2>Alarmas y actuaciones recientes</h2>
+          <button id="openListBtn" type="button">Ver todas</button>
+        </div>
+        <div id="recentList" class="alarm-list compact"></div>
+      </section>
+    </main>
+
+    <nav id="sideMenu" class="side-menu" aria-hidden="true">
+      <button id="closeMenuBtn" class="close-menu" type="button" aria-label="Cerrar menú">×</button>
+      <h2>Menú</h2>
+      <button type="button" data-panel="pairPanel">Emparejar móvil</button>
+      <button type="button" data-panel="sendPanel">Enviar alarma</button>
+      <button type="button" data-panel="receivedPanel">Alarmas recibidas</button>
+      <button type="button" data-panel="sentPanel">Alarmas enviadas</button>
+      <button type="button" data-panel="historyPanel">Historial</button>
+      <button type="button" data-panel="settingsPanel">Ajustes</button>
+      <button type="button" data-panel="aboutPanel">Acerca de</button>
+    </nav>
+    <div id="scrim" class="scrim"></div>
+
+    <section id="pairPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="pairTitle">
+      <button class="panel-close" type="button" data-close aria-label="Cerrar">×</button>
+      <h2 id="pairTitle">Emparejar móvil</h2>
+      <p class="info-box">Cada móvil tiene un identificador. Introduce aquí el identificador del otro móvil. Los dos móviles deben quedar emparejados entre sí.</p>
+      <div class="device-id-box">
+        <span>ID de este móvil</span>
+        <code id="myDeviceIdCode"></code>
+        <button id="copyMyIdBtn" type="button" class="secondary">Copiar mi ID</button>
+      </div>
+      <label for="peerIdInput">ID del otro móvil</label>
+      <input id="peerIdInput" type="text" placeholder="MOVIL-XXXX-XXXX" autocomplete="off" autocapitalize="characters" />
+      <button id="savePairBtn" type="button" class="primary">Guardar emparejamiento</button>
+      <button id="clearPairBtn" type="button" class="danger outline">Borrar emparejamiento</button>
+      <p id="pairInfo" class="panel-info"></p>
+    </section>
+
+    <section id="sendPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="sendTitle">
+      <button class="panel-close" type="button" data-close aria-label="Cerrar">×</button>
+      <h2 id="sendTitle">Enviar alarma al otro móvil</h2>
+      <label for="alarmDateTime">Fecha y hora</label>
+      <input id="alarmDateTime" type="datetime-local" />
+      <label for="alarmMessage">Mensaje</label>
+      <textarea id="alarmMessage" rows="5" placeholder="Ejemplo: acuérdate de llamarme..."></textarea>
+
+      <div class="gps-permission-box">
+        <strong>GPS del móvil emisor</strong>
+        <p id="gpsPermissionText">Pulsa para autorizar la ubicación de este móvil. El receptor no usará su GPS.</p>
+        <button id="authorizeGpsBtn" type="button" class="secondary">Autorizar GPS de este móvil</button>
+      </div>
+
+      <button id="sendAlarmBtn" type="button" class="primary">Enviar alarma</button>
+      <p id="sendInfo" class="panel-info"></p>
+    </section>
+
+    <section id="receivedPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="receivedTitle">
+      <button class="panel-close" type="button" data-close aria-label="Cerrar">×</button>
+      <h2 id="receivedTitle">Alarmas recibidas</h2>
+      <div id="receivedList" class="alarm-list"></div>
+    </section>
+
+    <section id="sentPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="sentTitle">
+      <button class="panel-close" type="button" data-close aria-label="Cerrar">×</button>
+      <h2 id="sentTitle">Alarmas enviadas</h2>
+      <div id="sentList" class="alarm-list"></div>
+    </section>
+
+    <section id="historyPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="historyTitle">
+      <button class="panel-close" type="button" data-close aria-label="Cerrar">×</button>
+      <h2 id="historyTitle">Historial</h2>
+      <div class="list-actions">
+        <button id="historyAllBtn" type="button" class="secondary">Todas</button>
+        <button id="historyPendingBtn" type="button" class="secondary">Pendientes</button>
+        <button id="historyClearLocalBtn" type="button" class="danger outline">Limpiar historial local finalizado</button>
+      </div>
+      <div id="historyList" class="alarm-list"></div>
+    </section>
+
+    <section id="settingsPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <button class="panel-close" type="button" data-close aria-label="Cerrar">×</button>
+      <h2 id="settingsTitle">Ajustes</h2>
+      <label>Color de la app</label>
+      <div id="themeButtons" class="chips">
+        <button type="button" data-theme="blue">Azul</button>
+        <button type="button" data-theme="green">Verde</button>
+        <button type="button" data-theme="purple">Morado</button>
+        <button type="button" data-theme="orange">Naranja</button>
+        <button type="button" data-theme="dark">Oscuro</button>
+      </div>
+      <label>Aspecto</label>
+      <div id="modeButtons" class="chips">
+        <button type="button" data-mode="2d">2D</button>
+        <button type="button" data-mode="3d">3D</button>
+      </div>
+      <label for="opacityInput">Opacidad de ventanas</label>
+      <div class="range-row">
+        <input id="opacityInput" type="range" min="60" max="100" step="5" />
+        <strong id="opacityValue">90%</strong>
+      </div>
+      <label for="soundSelect">Sonido de alarma</label>
+      <select id="soundSelect">
+        <option value="classic">Clásico</option>
+        <option value="double">Doble pitido</option>
+        <option value="fast">Rápido</option>
+        <option value="soft">Suave</option>
+      </select>
+      <button id="testSoundBtn" type="button" class="secondary">Probar sonido</button>
+    </section>
+
+    <section id="aboutPanel" class="panel hidden" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+      <button class="panel-close" type="button" data-close aria-label="Cerrar">×</button>
+      <h2 id="aboutTitle">Acerca de Sinc Alarmas</h2>
+      <p><strong>Sinc Alarmas</strong> permite enviar alarmas programadas entre dos móviles emparejados.</p>
+      <p>Cuando el emisor lo autoriza, la app comparte su ubicación GPS minuto a minuto para que el receptor pueda verla durante la alarma.</p>
+      <p class="legal-note">La ubicación GPS solo se comparte cuando el usuario emisor concede permiso desde su propio dispositivo. Esta app está pensada para avisos familiares, cuidado, acompañamiento y seguridad. No debe utilizarse para vigilancia oculta ni seguimiento sin consentimiento.</p>
+    </section>
+
+    <div id="initialReceiverPopup" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="initialPopupTitle">
+      <div class="modal-box">
+        <button id="closeInitialPopupBtn" class="modal-close" type="button" aria-label="Cerrar">×</button>
+        <h2 id="initialPopupTitle">Nueva alarma recibida</h2>
+        <div id="initialPopupContent" class="modal-content"></div>
+        <h3>Ubicación GPS del emisor</h3>
+        <div id="initialGpsList" class="gps-list"></div>
+      </div>
+    </div>
+
+    <div id="ringingPopup" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="ringingTitle">
+      <div class="modal-box ringing-box">
+        <h2 id="ringingTitle">ALARMA</h2>
+        <div id="ringingContent" class="modal-content"></div>
+        <h3>Ubicación GPS del emisor</h3>
+        <div id="ringingGpsList" class="gps-list"></div>
+        <button id="confirmReceivedBtn" type="button" class="primary large">RECIBIDO</button>
+      </div>
+    </div>
+
+    <div id="senderAckPopup" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="senderAckTitle">
+      <div class="modal-box small">
+        <h2 id="senderAckTitle">Confirmación recibida</h2>
+        <p id="senderAckText"></p>
+        <button id="closeSenderAckBtn" type="button" class="primary">Aceptar</button>
+      </div>
+    </div>
+
+    <div id="appDialog" class="modal app-dialog hidden" role="dialog" aria-modal="true" aria-labelledby="appDialogTitle" aria-describedby="appDialogMessage">
+      <div class="modal-box small app-dialog-box">
+        <div id="appDialogIcon" class="dialog-icon" aria-hidden="true">?</div>
+        <h2 id="appDialogTitle">Confirmación</h2>
+        <p id="appDialogMessage" class="dialog-message"></p>
+        <div id="appDialogValueWrap" class="dialog-value-wrap hidden">
+          <span id="appDialogValueLabel" class="dialog-value-label">ID de este móvil</span>
+          <code id="appDialogValue" class="dialog-value" tabindex="0"></code>
+          <button id="appDialogCopyBtn" type="button" class="secondary">Copiar ID</button>
+        </div>
+        <div class="dialog-actions">
+          <button id="appDialogCancelBtn" type="button" class="secondary">Cancelar</button>
+          <button id="appDialogConfirmBtn" type="button">Aceptar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.SINC_FIREBASE_CONFIG = window.SINC_FIREBASE_CONFIG || {
+      apiKey: "AIzaSyA5qyoQK_YAH58FKYynViWJrnMIiJkpY",
+      authDomain: "sincalarmas.firebaseapp.com",
+      databaseURL: "https://sincalarmas-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "sincalarmas",
+      storageBucket: "sincalarmas.firebasestorage.app",
+      messagingSenderId: "640133778450",
+      appId: "1:640133778450:web:fbcff7b620d7c686c91ccb",
+      measurementId: "G-JNBH8HQPMK"
+    };
+  </script>
+  <script src="assets/js/firebase-config.js?v=sinc-nueva-v2-dialogos-20260711"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+  <script src="assets/js/app.js?v=sinc-nueva-v2-dialogos-20260711"></script>
+</body>
+</html>
